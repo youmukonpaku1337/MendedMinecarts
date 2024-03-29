@@ -2,9 +2,7 @@ package mendedminecarts.mixin.settings;
 
 import mendedminecarts.settings.SettingSync;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.packet.s2c.play.CustomPayloadS2CPacket;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.packet.CustomPayload;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -16,14 +14,14 @@ public class ClientPlayNetworkHandlerMixin {
 
     @Inject(
             method = "onCustomPayload",
-            at = @At(value = "INVOKE", target = "Lorg/slf4j/Logger;warn(Ljava/lang/String;Ljava/lang/Object;)V", shift = At.Shift.BEFORE, remap = false),
+            at = @At(value = "HEAD"),
             cancellable = true,
             locals = LocalCapture.CAPTURE_FAILHARD
     )
-    public void onCustomPayload(CustomPayloadS2CPacket packet, CallbackInfo ci, Identifier identifier, PacketByteBuf packetByteBuf) {
-        if (packet.getChannel().equals(SettingSync.CHANNEL)) {
+    public void onCustomPayload(CustomPayload payload, CallbackInfo ci) {
+        if (payload instanceof SettingSync.MendedMinecartsSettingPayload mmsp) {
             ci.cancel();
-            SettingSync.handleData(packetByteBuf);
+            SettingSync.handleData(mmsp);
         }
     }
 }

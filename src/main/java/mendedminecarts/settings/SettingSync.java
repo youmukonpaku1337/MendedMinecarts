@@ -1,9 +1,9 @@
 package mendedminecarts.settings;
 
-import io.netty.buffer.Unpooled;
 import mendedminecarts.MendedMinecartsMod;
 import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.packet.s2c.play.CustomPayloadS2CPacket;
+import net.minecraft.network.packet.CustomPayload;
+import net.minecraft.network.packet.s2c.common.CustomPayloadS2CPacket;
 import net.minecraft.server.PlayerManager;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
@@ -12,34 +12,52 @@ public class SettingSync {
     public static final Identifier CHANNEL = new Identifier("mendedminecarts:settings");
     public static PlayerManager PLAYER_MANAGER = null;
 
-    public static void handleData(PacketByteBuf data) {
+    public static void handleData(MendedMinecartsSettingPayload payload) {
         try {
-            int version = data.readInt();
-            if (MendedMinecartsMod.SETTING_VERSION == version) {
-                int settingIndex = data.readInt();
-                String settingValue = data.readString();
-                if (settingIndex >= 0 && settingIndex < MendedMinecartsMod.FLAT_SETTINGS.size()) {
-                    MendedMinecartsMod.FLAT_SETTINGS.get(settingIndex).setFromStringValue(settingValue);
-                }
-            }
+            payload.setting.setFromStringValue(payload.value);
         } catch (Exception ignored) {
 
         }
     }
 
-    public static CustomPayloadS2CPacket makeSettingPacket(Setting setting) {
-        PacketByteBuf packetByteBuf = new PacketByteBuf(Unpooled.buffer());
-        packetByteBuf.writeInt(MendedMinecartsMod.SETTING_VERSION);
-        packetByteBuf.writeInt(MendedMinecartsMod.FLAT_SETTINGS.indexOf(setting));
-        packetByteBuf.writeString(setting.getStringValue());
+    public record MendedMinecartsSettingPayload(Setting setting, String value) implements CustomPayload {
 
-        return new CustomPayloadS2CPacket(CHANNEL, packetByteBuf);
+        public MendedMinecartsSettingPayload(Setting setting) {
+            this(setting, setting.getStringValue());
+        }
+
+        public MendedMinecartsSettingPayload(PacketByteBuf buf) {
+            this(checkVersionAndGetSetting(buf), buf.readString());
+        }
+
+        private static Setting checkVersionAndGetSetting(PacketByteBuf buf) {
+            if (buf.readInt() != MendedMinecartsMod.SETTING_VERSION) {
+                throw new IllegalArgumentException("Invalid setting version");
+            }
+            return MendedMinecartsMod.FLAT_SETTINGS.get(buf.readInt());
+        }
+
+        @Override
+        public void write(PacketByteBuf buf) {
+            buf.writeInt(MendedMinecartsMod.SETTING_VERSION);
+            buf.writeInt(MendedMinecartsMod.FLAT_SETTINGS.indexOf(setting));
+            buf.writeString(value);
+        }
+
+        @Override
+        public Identifier id() {
+            return CHANNEL;
+        }
+    }
+
+    public static MendedMinecartsSettingPayload makeSettingPacket(Setting setting) {
+        return new MendedMinecartsSettingPayload(setting);
     }
 
     public static void updateAllToPlayer(ServerPlayerEntity player) {
         for (Setting setting : MendedMinecartsMod.FLAT_SETTINGS) {
-            CustomPayloadS2CPacket packet = makeSettingPacket(setting);
-            player.networkHandler.sendPacket(packet);
+            MendedMinecartsSettingPayload payload = makeSettingPacket(setting);
+            player.networkHandler.sendPacket(new CustomPayloadS2CPacket(payload));
         }
     }
 
@@ -48,7 +66,7 @@ public class SettingSync {
         if (playerManager == null) {
             return;
         }
-        CustomPayloadS2CPacket packet = makeSettingPacket(setting);
-        playerManager.sendToAll(packet);
+        MendedMinecartsSettingPayload payload = makeSettingPacket(setting);
+        playerManager.sendToAll(new CustomPayloadS2CPacket(payload));
     }
 }

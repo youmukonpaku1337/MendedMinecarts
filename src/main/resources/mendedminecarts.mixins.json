@@ -24,10 +24,12 @@
     "placement.AbstractRailBlockMixin",
     "placement.DetectorRailBlockMixin",
     "settings.ClientPlayNetworkHandlerMixin",
+    "settings.CustomPayloadS2CPacketMixin",
     "settings.PlayerManagerMixin"
   ],
   "client": [
     "AbstractMinecartEntityMixin_Client",
+    "ClientWorldMixin",
     "WorldRendererMixin_Client"
   ],
   "injectors": {

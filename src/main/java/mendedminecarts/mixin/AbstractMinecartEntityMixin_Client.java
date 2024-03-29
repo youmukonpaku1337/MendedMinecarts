@@ -9,7 +9,7 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.vehicle.AbstractMinecartEntity;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -18,9 +18,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(AbstractMinecartEntity.class)
 public abstract class AbstractMinecartEntityMixin_Client extends Entity implements AbstractMinecartEntityAccess {
 
+	@Unique
 	private MinecartDisplayData displayData;
 
-	@Shadow public abstract void updateTrackedPositionAndAngles(double x, double y, double z, float yaw, float pitch, int interpolationSteps, boolean interpolate);
 
 	public AbstractMinecartEntityMixin_Client(EntityType<?> type, World world) {
 		super(type, world);
@@ -46,23 +46,20 @@ public abstract class AbstractMinecartEntityMixin_Client extends Entity implemen
 //	}
 
 	@Inject(
-			method = "updateTrackedPositionAndAngles(DDDFFIZ)V",
+			method = "updateTrackedPositionAndAngles(DDDFFI)V",
 			at = @At("HEAD"),
 			cancellable = true
 	)
-	private void setCartPosLikeOtherEntities(double x, double y, double z, float yaw, float pitch, int interpolationSteps, boolean interpolate, CallbackInfo ci) {
+	private void setCartPosLikeOtherEntities(double x, double y, double z, float yaw, float pitch, int interpolationSteps, CallbackInfo ci) {
 		if (this.getWorld().isClient && (MendedMinecartsMod.ACCURATE_CLIENT_MINECARTS.isEnabled() || MendedMinecartsMod.NO_CLIENT_CART_INTERPOLATION.isEnabled())) {
 			ci.cancel();
-			super.updateTrackedPositionAndAngles(x, y, z, yaw, pitch, interpolationSteps, interpolate);
+			super.updateTrackedPositionAndAngles(x, y, z, yaw, pitch, interpolationSteps);
 		}
 //		this.displayData = MinecartDisplayData.withPos(this, new Vec3d(x, y, z));
 	}
 
-	@Inject(
-			method = "tick",
-			at = @At("HEAD")
-	)
-	private void updateDisplayInfo(CallbackInfo ci) {
+	@Override
+	public void updateDisplayInfo() {
 		if (!this.getWorld().isClient()) {
 			return;
 		}

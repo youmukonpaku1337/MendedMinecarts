@@ -20,14 +20,14 @@ public abstract class BoatEntityMixin extends Entity {
     }
 
     @Inject(
-            method = "updateTrackedPositionAndAngles(DDDFFIZ)V",
+            method = "updateTrackedPositionAndAngles(DDDFFI)V",
             at = @At("HEAD"),
             cancellable = true
     )
-    private void setCartPosLikeOtherEntities(double x, double y, double z, float yaw, float pitch, int interpolationSteps, boolean interpolate, CallbackInfo ci) {
+    private void setCartPosLikeOtherEntities(double x, double y, double z, float yaw, float pitch, int interpolationSteps, CallbackInfo ci) {
         if (this.getWorld().isClient && (MendedMinecartsMod.ACCURATE_CLIENT_BOATS.isEnabled())) {
             ci.cancel();
-            super.updateTrackedPositionAndAngles(x, y, z, yaw, pitch, interpolationSteps, interpolate);
+            super.updateTrackedPositionAndAngles(x, y, z, yaw, pitch, interpolationSteps);
         }
     }
 

@@ -12,6 +12,7 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 import net.minecraft.world.entity.EntityChangeListener;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
@@ -27,7 +28,7 @@ public abstract class AbstractMinecartEntityMixin_YawFix extends Entity {
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/entity/vehicle/AbstractMinecartEntity;setRotation(FF)V",
-                    ordinal = 2
+                    ordinal = 1
             )
     )
     private void setRotationBetter(AbstractMinecartEntity instance, float yaw, float pitch) {
@@ -39,6 +40,7 @@ public abstract class AbstractMinecartEntityMixin_YawFix extends Entity {
         this.setRotation(yaw, pitch);
     }
 
+    @Unique
     private boolean fixRotationToRail(float yaw, float pitch) {
         BlockState blockState = this.getWorld().getBlockState(this.getBlockPos());
         if (blockState.getBlock() instanceof AbstractRailBlock railBlock) {
