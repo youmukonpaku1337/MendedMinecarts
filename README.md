@@ -17,6 +17,7 @@ the `.minecraft/mods` folder.
 Available settings:
 
 - AccurateClientMinecarts: Simulate Minecarts on the client like on the server
+- AccurateClientBoats: Simulate Boats on the client, similiar to AccurateClientMinecarts
 - NoClientCartInterpolation: Avoid vanilla's clientside minecart position smoothing
 - AlwaysSyncCartPosition: Server always sends the cart position to the client for accuracy
 - CartSpeed: Customizable minecart speed limit
